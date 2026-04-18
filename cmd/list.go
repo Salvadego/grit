@@ -55,7 +55,11 @@ var listCmd = &cobra.Command{
 			if err != nil {
 				continue
 			}
-			cache[t.ID] = EntryFromTask(t, mtime)
+			cache[t.ID], err = EntryFromTask(t, mtime)
+			if err != nil {
+				return err
+			}
+
 			dirty = true
 			tasks = append(tasks, t)
 		}

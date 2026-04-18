@@ -1,5 +1,7 @@
 github.com/Salvadego/qlvm v0.0.0-20260401154246-284f28a1029d h1:DDfjgj+j4Ck7YfVyuzYc44Nj/oZEEUbD9d9wopwtJqo=
 github.com/Salvadego/qlvm v0.0.0-20260401154246-284f28a1029d/go.mod h1:JCdRv6r7Pz9MNPul5er+/rIEd6aJiJBX2CtQ7RSt78E=
+github.com/Salvadego/qlvm v0.0.0-20260418135235-1350492a1fac h1:BMfZdORoHZeqVbxvI8aJ4anYdPmqFbBGHMNKW+RW2Lc=
+github.com/Salvadego/qlvm v0.0.0-20260418135235-1350492a1fac/go.mod h1:JCdRv6r7Pz9MNPul5er+/rIEd6aJiJBX2CtQ7RSt78E=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/clipperhouse/displaywidth v0.10.0 h1:GhBG8WuerxjFQQYeuZAeVTuyxuX+UraiZGD4HJQ3Y8g=

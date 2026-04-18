@@ -27,14 +27,14 @@ type StateEntry struct {
 	TagCount      uint8
 	Title         [256]byte
 	Slug          [128]byte
-	Tags          [8][64]byte
+	Tags          [32][64]byte
 	RelationCount uint8
-	Relations     [8]RelationEntry
+	Relations     [32]RelationEntry
 }
 
-const maxTags = 8
-const maxRelations = 8
-const entrySize = 8 + 8 + 1 + 1 + 256 + 128 + 8*64
+const maxTags = 32
+const maxRelations = 32
+const entrySize = 8 + 8 + 1 + 1 + 256 + 128 + 32*64
 
 func (e StateEntry) ToTask(filename string) Task {
 	rels := make([]Relation, 0, e.RelationCount)
@@ -55,7 +55,14 @@ func (e StateEntry) ToTask(filename string) Task {
 	}
 }
 
-func EntryFromTask(t Task, mtime int64) StateEntry {
+func EntryFromTask(t Task, mtime int64) (StateEntry, error) {
+    if len(t.Tags) > maxTags {
+        return StateEntry{}, fmt.Errorf("task %d has %d tags, max is %d", t.ID, len(t.Tags), maxTags)
+    }
+    if len(t.Relations) > maxRelations {
+        return StateEntry{}, fmt.Errorf("task %d has %d relations, max is %d", t.ID, len(t.Relations), maxRelations)
+    }
+
 	var e StateEntry
 	e.ID = t.ID
 	e.MTime = mtime
@@ -83,7 +90,7 @@ func EntryFromTask(t Task, mtime int64) StateEntry {
 			RelType:  uint8(t.Relations[i].Type),
 		}
 	}
-	return e
+	return e, nil
 }
 
 func LoadState() map[uint64]StateEntry {
@@ -160,7 +167,10 @@ func RebuildState() (map[uint64]StateEntry, error) {
 		if err != nil {
 			continue
 		}
-		entries[t.ID] = EntryFromTask(t, info.ModTime().UnixNano())
+		entries[t.ID], err = EntryFromTask(t, info.ModTime().UnixNano())
+		if err != nil {
+			continue
+		}
 	}
 
 	return entries, SaveState(entries)
