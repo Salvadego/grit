@@ -56,6 +56,28 @@ func ParseTask(path string) (Task, error) {
 						t.Tags = append(t.Tags, strings.TrimSpace(tag))
 					}
 				}
+			case "relations":
+				val = strings.Trim(val, "[]")
+				if val == "" {
+					break
+				}
+				for _, part := range strings.Split(val, ",") {
+					part = strings.TrimSpace(part)
+					if part == "" {
+						continue
+					}
+					idStr, relType, hasType := strings.Cut(part, ":")
+					var rel Relation
+					id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+					if err != nil {
+						continue
+					}
+					rel.TargetID = id
+					if hasType {
+						rel.Type = parseRelationType(relType)
+					}
+					t.Relations = append(t.Relations, rel)
+				}
 			}
 			continue
 		}
@@ -115,4 +137,15 @@ func FindByRef(ref string) (string, error) {
 	}
 
 	return "", fmt.Errorf("no task found matching %q", ref)
+}
+
+func formatRelations(rels []Relation) string {
+	if len(rels) == 0 {
+		return "[]"
+	}
+	parts := make([]string, len(rels))
+	for i, r := range rels {
+		parts[i] = fmt.Sprintf("%d:%s", r.TargetID, r.Type)
+	}
+	return "[" + strings.Join(parts, ", ") + "]"
 }

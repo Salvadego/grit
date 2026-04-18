@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gosimple/slug"
@@ -11,6 +13,7 @@ import (
 )
 
 var addTags []string
+var addRelations []string
 
 var addCmd = &cobra.Command{
 	Use:   "add <title>",
@@ -26,7 +29,24 @@ var addCmd = &cobra.Command{
 			tags = "[" + joinTags(addTags) + "]"
 		}
 
-		content := fmt.Sprintf("---\nid: %d\nstatus: open\ntags: %s\n---\n# %s\n", id, tags, title)
+		var rels []Relation
+		for _, raw := range addRelations {
+			idStr, relType, hasType := strings.Cut(raw, ":")
+			id, err := strconv.ParseUint(strings.TrimSpace(idStr), 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid relation %q: id must be numeric", raw)
+			}
+			rel := Relation{TargetID: id}
+			if hasType {
+				rel.Type = parseRelationType(relType)
+			}
+			rels = append(rels, rel)
+		}
+
+		content := fmt.Sprintf(
+			"---\nid: %d\nstatus: open\ntags: %s\nrelations: %s\n---\n# %s\n",
+			id, tags, formatRelations(rels), title,
+		)
 		filename := fmt.Sprintf("%d-%s.md", id, titleSlug)
 		path := filepath.Join(TaskDir, filename)
 		tmp := path + ".tmp"
@@ -38,6 +58,17 @@ var addCmd = &cobra.Command{
 			return err
 		}
 
+		for _, rel := range rels {
+			targetPath, err := FindByRef(fmt.Sprintf("%d", rel.TargetID))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "grit: warning: relation target %d not found, skipping inverse\n", rel.TargetID)
+				continue
+			}
+			if err := addInverseRelation(targetPath, id, rel.Type); err != nil {
+				fmt.Fprintf(os.Stderr, "grit: warning: could not write inverse relation to %d: %v\n", rel.TargetID, err)
+			}
+		}
+
 		fmt.Printf("grit: created %d - %s\n  -> %s\n", id, title, filename)
 		return nil
 	},
@@ -45,6 +76,7 @@ var addCmd = &cobra.Command{
 
 func init() {
 	addCmd.Flags().StringSliceVarP(&addTags, "tags", "t", nil, "comma-separated tags")
+	addCmd.Flags().StringSliceVarP(&addRelations, "relations", "r", nil, `related task IDs, e.g. -r 1776481293919 -r 1776481439085:blocks`)
 	rootCmd.AddCommand(addCmd)
 }
 
