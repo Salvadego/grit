@@ -14,8 +14,10 @@ import (
 )
 
 var (
-	listQuery string
-	listSort  string
+	listQuery   string
+	listSort    string
+	listExec    string
+	listConfirm bool
 )
 
 var listCmd = &cobra.Command{
@@ -91,9 +93,13 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
-		sortTasks(out, listSort)
-		renderTable(out)
-		return nil
+		if listExec == "" {
+			sortTasks(out, listSort)
+			renderTable(out)
+			return nil
+		}
+
+		return execBatch(out, listExec, listConfirm)
 	},
 }
 
@@ -103,6 +109,10 @@ func init() {
 
 	listCmd.Flags().StringVarP(&listSort, "sort", "s", "created", "sort field: created, modified (append :asc for ascending)")
 	listCmd.RegisterFlagCompletionFunc("sort", sortCompletionFn)
+
+	listCmd.Flags().StringVarP(&listExec, "exec", "x", "", "batch action to apply: close, reopen, delete")
+	listCmd.Flags().BoolVar(&listConfirm, "confirm", false, "confirm destructive batch operation")
+	listCmd.RegisterFlagCompletionFunc("exec", execCompletionFn)
 
 	rootCmd.AddCommand(listCmd)
 }

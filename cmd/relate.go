@@ -49,6 +49,7 @@ var relateCmd = &cobra.Command{
 			return err
 		}
 
+		fmt.Printf("grit: updated relations for task %d\n", t.ID)
 		targetPath, err := FindByRef(fmt.Sprintf("%d", targetID))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "grit: warning: target %d not found, inverse not written\n", targetID)
@@ -124,7 +125,6 @@ func rewriteFrontmatter(path string, t Task) error {
 		return err
 	}
 
-	fmt.Printf("grit: updated relations for task %d\n", t.ID)
 	return nil
 }
 
