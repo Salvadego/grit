@@ -45,17 +45,19 @@ func queryCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]
 
 	default:
 		fields := []struct{ name, desc string }{
-			{"title", "string — task title"},
-			{"status", "string — open or closed"},
-			{"tags", "string — space-joined tag list"},
-			{"id", "number — task id"},
-			{"relations", "string — all relations (id:type ...)"},
-			{"blocked", "bool   — has any blocked-by relation"},
-			{"blocks", "string — IDs of tasks this blocks"},
-			{"blocked-by", "string — IDs of tasks blocking this"},
-			{"parent", "string — IDs of parent tasks"},
-			{"child", "string — IDs of child tasks"},
-			{"related", "string — IDs of related tasks"},
+			{"title", "string - task title"},
+			{"status", "string - open or closed"},
+			{"tags", "string - space-joined tag list"},
+			{"id", "number - task id"},
+			{"relations", "string - all relations (id:type ...)"},
+			{"blocked", "bool   - has any blocked-by relation"},
+			{"blocks", "string - IDs of tasks this blocks"},
+			{"blocked-by", "string - IDs of tasks blocking this"},
+			{"parent", "string - IDs of parent tasks"},
+			{"child", "string - IDs of child tasks"},
+			{"related", "string - IDs of related tasks"},
+			{"created", "date - derived from task ID"},
+			{"modified", "date - last file modification"},
 		}
 		keywords := []struct{ name, desc string }{
 			{"AND", "logical and"},
@@ -152,6 +154,24 @@ func refCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]st
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 	return liveRefSuggestions(toComplete), cobra.ShellCompDirectiveNoFileComp
+}
+
+func sortCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	options := []struct{ val, desc string }{
+		{"created", "newest created first (default)"},
+		{"created:asc", "oldest created first"},
+		{"created:desc", "newest created first"},
+		{"modified", "newest modified first"},
+		{"modified:asc", "oldest modified first"},
+		{"modified:desc", "newest modified first"},
+	}
+	var out []string
+	for _, o := range options {
+		if strings.HasPrefix(o.val, toComplete) {
+			out = append(out, o.val+"\t"+o.desc)
+		}
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
 func init() {

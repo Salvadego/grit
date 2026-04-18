@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -12,7 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listQuery string
+var (
+	listQuery string
+	listSort  string
+)
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -87,16 +91,39 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
+		sortTasks(out, listSort)
 		renderTable(out)
 		return nil
 	},
 }
 
 func init() {
-    // Keep -q as a hidden alias for backwards compat / muscle memory
 	listCmd.Flags().StringVarP(&listQuery, "query", "q", "", `filter expression, e.g. ".bug AND @open"`)
-    listCmd.Flags().MarkHidden("query")
+	listCmd.Flags().MarkHidden("query")
+
+	listCmd.Flags().StringVarP(&listSort, "sort", "s", "created", "sort field: created, modified (append :asc for ascending)")
+	listCmd.RegisterFlagCompletionFunc("sort", sortCompletionFn)
+
 	rootCmd.AddCommand(listCmd)
+}
+
+func sortTasks(tasks []Task, by string) {
+	asc := strings.HasSuffix(by, ":asc")
+	field := strings.TrimSuffix(by, ":asc")
+
+	sort.Slice(tasks, func(i, j int) bool {
+		var a, b int64
+		switch field {
+		case "modified":
+			a, b = tasks[i].MTime, tasks[j].MTime
+		default:
+			a, b = int64(tasks[i].ID), int64(tasks[j].ID)
+		}
+		if asc {
+			return a < b
+		}
+		return a > b
+	})
 }
 
 func findEntryByFilename(cache map[uint64]StateEntry, path string) (StateEntry, bool) {
