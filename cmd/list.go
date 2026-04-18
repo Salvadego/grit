@@ -29,6 +29,10 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
+		if listQuery == "" {
+			listQuery = "@open" // show only open tasks by default
+		}
+
 		cq, err := gritEngine.Compile(listQuery)
 		if err != nil {
 			return fmt.Errorf("invalid query: %w", err)

@@ -1,6 +1,6 @@
 ---
 id: 1776488713202
-status: open
+status: closed
 tags: [feature, v0.2.0, autocompletion]
 relations: [1776488781700:related]
 ---

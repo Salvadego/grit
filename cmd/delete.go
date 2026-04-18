@@ -17,9 +17,24 @@ var deleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		t, err := ParseTask(path)
+		if err != nil {
+			return err
+		}
+
 		if err := os.Remove(path); err != nil {
 			return err
 		}
+
+		cache := LoadState()
+		if _, exists := cache[t.ID]; exists {
+			delete(cache, t.ID)
+			if err := SaveState(cache); err != nil {
+				fmt.Fprintf(os.Stderr, "grit: warning: deleted file but failed to update state: %v\n", err)
+			}
+		}
+
 		fmt.Printf("grit: deleted %s\n", path)
 		return nil
 	},
