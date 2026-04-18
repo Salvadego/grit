@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -44,18 +43,6 @@ func queryCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]
 			suggestions = append(suggestions, prefix+"!"+slug+"\t"+"relates to: "+title)
 		}
 
-	case isDateValueContext(toComplete):
-		now := time.Now()
-		for _, t := range []time.Time{
-			now,
-			now.AddDate(0, 0, -7),
-			now.AddDate(0, -1, 0),
-			now.AddDate(0, -3, 0),
-		} {
-			d := t.Format("2006-01-02")
-			suggestions = append(suggestions, prefix+d+"\t"+humanDate(t, now))
-		}
-
 	default:
 		fields := []struct{ name, desc string }{
 			{"title", "string - task title"},
@@ -69,8 +56,8 @@ func queryCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]
 			{"parent", "string - IDs of parent tasks"},
 			{"child", "string - IDs of child tasks"},
 			{"related", "string - IDs of related tasks"},
-            {"created",    "date - derived from task ID"},
-            {"modified",   "date - last file modification"},
+			{"created", "date - derived from task ID"},
+			{"modified", "date - last file modification"},
 		}
 		keywords := []struct{ name, desc string }{
 			{"AND", "logical and"},
@@ -160,33 +147,6 @@ func liveRefSuggestions(partial string) []string {
 		}
 	}
 	return out
-}
-
-func isDateValueContext(q string) bool {
-	q = strings.TrimSpace(strings.ToLower(q))
-	for _, field := range []string{"created", "modified"} {
-		for _, op := range []string{" > ", " >= ", " < ", " <= ", " = ", " != "} {
-			if strings.HasSuffix(q, field+strings.TrimRight(op, " ")) ||
-				strings.HasSuffix(q, field+op) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func humanDate(t, now time.Time) string {
-	days := int(now.Sub(t).Hours() / 24)
-	switch {
-	case days == 0:
-		return "today"
-	case days == 7:
-		return "7 days ago"
-	case days <= 31:
-		return "1 month ago"
-	default:
-		return "3 months ago"
-	}
 }
 
 func refCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
