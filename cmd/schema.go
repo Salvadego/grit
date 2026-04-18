@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Salvadego/qlvm"
 )
@@ -20,6 +21,8 @@ var gritEngine = qlvm.New(
 		Field("parent", qlvm.String).
 		Field("child", qlvm.String).
 		Field("related", qlvm.String).
+		Field("created",  qlvm.Date).
+		Field("modified", qlvm.Date).
 		Prefix('.', "tags", qlvm.Contains).
 		Prefix('@', "status", qlvm.EQ).
 		Prefix('!', "relations", qlvm.Contains).
@@ -72,6 +75,10 @@ func taskResolver(t Task) qlvm.Resolver {
 			return join(buckets[RelChild]), true
 		case "related":
 			return join(buckets[RelRelated]), true
+		case "created":
+			return time.UnixMilli(int64(t.ID)).Format("2006-01-02"), true
+		case "modified":
+			return time.Unix(0, t.MTime).Format("2006-01-02"), true
 		}
 		return nil, false
 	}
