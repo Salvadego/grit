@@ -5,7 +5,7 @@ import "strings"
 const TaskDir = ".grit"
 const StateFile = ".grit/.state.bin"
 const StateMagic uint32 = 0x47726954
-const StateVersion uint8 = 2
+const StateVersion uint8 = 3
 
 type RelationType uint8
 

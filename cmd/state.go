@@ -32,8 +32,8 @@ type StateEntry struct {
 	Relations     [8]RelationEntry
 }
 
-const maxTags = 8
-const maxRelations = 8
+const maxTags = 32
+const maxRelations = 32
 const entrySize = 8 + 8 + 1 + 1 + 256 + 128 + 8*64
 
 func (e StateEntry) ToTask(filename string) Task {

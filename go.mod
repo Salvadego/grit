@@ -5,7 +5,7 @@ go 1.26.2
 require github.com/olekukonko/tablewriter v1.1.4
 
 require (
-	github.com/Salvadego/qlvm v0.0.0-20260401154246-284f28a1029d // indirect
+	github.com/Salvadego/qlvm v0.0.0-20260418135235-1350492a1fac // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/displaywidth v0.10.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
