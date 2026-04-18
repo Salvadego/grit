@@ -1,6 +1,6 @@
 ---
 id: 1776488781700
-status: open
+status: closed
 tags: [feature, v0.2.0, autocompletion]
 relations: [1776488713202:related]
 ---
@@ -15,3 +15,6 @@ This is kind of two changes:
    unnecessary (this may change since I plan to add batch
    operations later... such as closing multiple tasks at the same
    time)
+
+>  To keep backwards compatible, I will keep the -q flag so that existing
+>  scripts won't break
