@@ -34,8 +34,11 @@ var deleteCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "grit: warning: deleted file but failed to update state: %v\n", err)
 			}
 		}
-
-		fmt.Printf("grit: deleted %s\n", path)
+		if isPiped() {
+			fmt.Printf("%d\n", t.ID)
+		} else {
+			fmt.Printf("grit: deleted %s\n", path)
+		}
 		return nil
 	},
 }

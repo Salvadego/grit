@@ -5,11 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/Salvadego/qlvm"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -35,11 +33,10 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
-		if listQuery == "" {
-			listQuery = "@open" // show only open tasks by default
-		}
-
 		query := listQuery
+		if query == "" {
+			query = "@open"
+		}
 		if len(args) > 0 {
 			query = args[0]
 		}
@@ -95,7 +92,11 @@ var listCmd = &cobra.Command{
 
 		if listExec == "" {
 			sortTasks(out, listSort)
-			renderTable(out)
+			if isPiped() {
+				renderPiped(out)
+			} else {
+				renderTable(out)
+			}
 			return nil
 		}
 
@@ -154,48 +155,4 @@ func hasTag(tags []string, tag string) bool {
 		}
 	}
 	return false
-}
-
-func renderTable(tasks []Task) {
-	const reset = "\033[0m"
-	const green = "\033[32m"
-	const gray = "\033[90m"
-	const bold = "\033[1m"
-
-	data := [][]string{}
-	header := []string{
-		"id",
-		"status",
-		"title",
-		"tags",
-	}
-
-	for _, t := range tasks {
-		var statusCol string
-		if t.Status == "open" {
-			statusCol = green + "open" + reset
-		} else {
-			statusCol = gray + "closed" + reset
-		}
-
-		title := t.Title
-		if len(title) > 34 {
-			title = title[:31] + "..."
-		}
-		tags := strings.Join(t.Tags, ", ")
-
-		id := strconv.FormatUint(uint64(t.ID), 10)
-
-		data = append(data, []string{
-			id,
-			statusCol,
-			title,
-			tags,
-		})
-	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.Header(header)
-	table.Bulk(data)
-	table.Render()
 }

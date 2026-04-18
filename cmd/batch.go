@@ -73,16 +73,22 @@ func execBatch(tasks []Task, rawAction string, confirm bool) error {
 			}
 		}
 		okCount++
-		fmt.Printf("  %-16d  %s\n", t.ID, t.Title)
+		if isPiped() {
+			fmt.Printf("%d\n", t.ID)
+		} else {
+			fmt.Printf("  %-16d  %s\n", t.ID, t.Title)
+		}
 	}
 
 	if cacheModified {
 		_ = SaveState(cache)
 	}
 
-	fmt.Printf("\ngrit: %d/%d succeeded\n", okCount, len(tasks))
+	if !isPiped() {
+		fmt.Printf("\ngrit: %d/%d succeeded\n", okCount, len(tasks))
+	}
 	if len(errs) > 0 {
-		fmt.Fprintf(os.Stderr, "\ngrit: errors:\n%s\n", strings.Join(errs, "\n"))
+		fmt.Fprintf(os.Stderr, "grit: errors:\n%s\n", strings.Join(errs, "\n"))
 	}
 
 	return nil

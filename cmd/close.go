@@ -38,7 +38,13 @@ func setStatus(ref, from, to string) error {
 	if err := os.Rename(tmp, path); err != nil {
 		return err
 	}
-	fmt.Printf("grit: %s -> %s\n", ref, to)
+
+	id, _ := idFromFilename(path)
+	if isPiped() {
+		fmt.Printf("%d\n", id)
+	} else {
+		fmt.Printf("grit: %s -> %s\n", ref, to)
+	}
 	return nil
 }
 
