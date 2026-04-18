@@ -1,7 +1,8 @@
 ---
 id: 1776485913945
-status: open
+status: closed
 tags: [feature, v0.2.0, tasks, state, query_engine]
+relations: [1776488607037:blocked-by]
 ---
 # feature: add relations between different tasks
 

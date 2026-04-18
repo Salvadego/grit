@@ -15,27 +15,43 @@ type StateHeader struct {
 	Count   uint64
 }
 
+type RelationEntry struct {
+	TargetID uint64
+	RelType  uint8
+}
+
 type StateEntry struct {
-	ID         uint64
-	MTime      int64
-	StatusByte uint8
-	TagCount   uint8
-	Title      [256]byte
-	Slug       [128]byte
-	Tags       [8][64]byte
+	ID            uint64
+	MTime         int64
+	StatusByte    uint8
+	TagCount      uint8
+	Title         [256]byte
+	Slug          [128]byte
+	Tags          [8][64]byte
+	RelationCount uint8
+	Relations     [8]RelationEntry
 }
 
 const maxTags = 8
+const maxRelations = 8
 const entrySize = 8 + 8 + 1 + 1 + 256 + 128 + 8*64
 
 func (e StateEntry) ToTask(filename string) Task {
+	rels := make([]Relation, 0, e.RelationCount)
+	for i := uint8(0); i < e.RelationCount; i++ {
+		rels = append(rels, Relation{
+			TargetID: e.Relations[i].TargetID,
+			Type:     RelationType(e.Relations[i].RelType),
+		})
+	}
 	return Task{
-		ID:       e.ID,
-		Status:   statusString(e.StatusByte),
-		MTime:    e.MTime,
-		Title:    nullTrimmed(e.Title[:]),
-		Tags:     decodeTags(e),
-		Filename: filename,
+		ID:        e.ID,
+		Status:    statusString(e.StatusByte),
+		MTime:     e.MTime,
+		Title:     nullTrimmed(e.Title[:]),
+		Tags:      decodeTags(e),
+		Relations: rels,
+		Filename:  filename,
 	}
 }
 
@@ -54,6 +70,18 @@ func EntryFromTask(t Task, mtime int64) StateEntry {
 	e.TagCount = uint8(n)
 	for i := 0; i < n; i++ {
 		copyFixed(e.Tags[i][:], t.Tags[i])
+	}
+
+	rn := len(t.Relations)
+	if rn > maxRelations {
+		rn = maxRelations
+	}
+	e.RelationCount = uint8(rn)
+	for i := 0; i < rn; i++ {
+		e.Relations[i] = RelationEntry{
+			TargetID: t.Relations[i].TargetID,
+			RelType:  uint8(t.Relations[i].Type),
+		}
 	}
 	return e
 }
