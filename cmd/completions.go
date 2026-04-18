@@ -174,6 +174,34 @@ func sortCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]s
 	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
+func execCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	for _, prefix := range []string{"tag:", "untag:"} {
+		if strings.HasPrefix(toComplete, prefix) {
+			partial := strings.TrimPrefix(toComplete, prefix)
+			var out []string
+			for _, tag := range liveTagSuggestions(partial) {
+				out = append(out, prefix+tag+"\tapply to matched tasks")
+			}
+			return out, cobra.ShellCompDirectiveNoFileComp
+		}
+	}
+
+	options := []struct{ val, desc string }{
+		{"close", "mark all matched tasks as closed"},
+		{"reopen", "reopen all matched tasks"},
+		{"delete", "permanently delete all matched tasks"},
+		{"tag:", "add a tag, e.g. tag:v0.3.0"},
+		{"untag:", "remove a tag, e.g. untag:v0.2.0"},
+	}
+	var out []string
+	for _, o := range options {
+		if strings.HasPrefix(o.val, toComplete) {
+			out = append(out, o.val+"\t"+o.desc)
+		}
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
+}
+
 func init() {
 	refCommands := []*cobra.Command{
 		editCmd,

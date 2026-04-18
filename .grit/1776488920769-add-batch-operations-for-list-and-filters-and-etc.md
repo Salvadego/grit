@@ -1,6 +1,6 @@
 ---
 id: 1776488920769
-status: open
+status: closed
 tags: [feature, v0.2.0, list_cmd]
 relations: [1776488795926:related]
 ---
