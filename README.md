@@ -112,17 +112,21 @@ grit init
 
 ### `grit add <title>`
 
-Creates a new task file.
+Creates a new task file. Prints the new task ID to stdout - scriptable.
 
 ```bash
 grit add "Refactor the parser"
 grit add "Deploy to staging" -t devops,urgent
 grit add "Fix login" -t bug -r 1776481293919:blocks
+
+# capture the ID in a script
+id=$(grit add "hotfix: nil deref" -t bug)
+grit relate "$id" 1776481293919 blocks
 ```
 
-| Flag | Description |
-| ------|-------------|
-| `-t, --tags` | Comma-separated tags |
+|       Flag        |                              Description                               |
+|      ------       |                             -------------                              |
+|   `-t, --tags`    |                          Comma-separated tags                          |
 | `-r, --relations` | Related task IDs, e.g. `-r 1776481293919` or `-r 1776481293919:blocks` |
 
 ---
@@ -156,6 +160,26 @@ grit list "@open" -x tag:v0.2.0 --confirm      # add tag to all matched
 grit list ".v0.1.0" -x untag:v0.1.0 --confirm  # remove tag from all matched
 grit list "@closed" -x delete --confirm         # delete all closed tasks
 ```
+
+**Terminal output** adapts to the available width:
+
+```
+<  100 cols  ->  id, status, title
+>= 100 cols  ->  + tags
+>= 130 cols  ->  + relations
+>= 150 cols  ->  + created
+>= 170 cols  ->  + modified
+```
+
+**Piped output** is TSV - one task per line, header on line 1, no ANSI codes.
+Safe for `awk`, `cut`, `jq`, `mlr`. Relations are pipe-separated within their
+field: `blocks:1776481293919|blocked-by:1776481439085`
+
+```
+id\tstatus\ttitle\ttags\trelations\tcreated\tmodified
+```
+
+See [Scripting](#scripting) for examples.
 
 |     Flag      |                                Description                                 |
 |    ------     |                               -------------                                |
@@ -394,7 +418,59 @@ dev -> git tag v0.x.y -> go install @latest
 
 ---
 
+## Scripting
+
+```bash
+# capture new task ID
+id=$(grit add "hotfix: nil deref in parser" -t bug)
+grit relate "$id" 1776481293919 blocks
+
+# close all v1.0.0 tasks, capture IDs
+grit list ".v1.0.0 AND @open" -x close --confirm | while read -r id; do
+    echo "closed: $id"
+done
+
+# count open tasks per tag
+grit list "@open" | awk -F'\t' '
+NR == 1 { next }
+{ n = split($4, tags, ","); for (i=1;i<=n;i++) count[tags[i]]++ }
+END { for (tag in count) printf "%3d  %s\n", count[tag], tag }
+' | sort -rn
+
+# just titles of open bug tasks
+grit list ".bug AND @open" | cut -f3 | tail -n +2
+
+# open every urgent task in editor
+grit list "@open AND .urgent" | cut -f1 | tail -n +2 | xargs -I{} grit edit {}
+
+# export open tasks to JSON
+grit list "@open" | awk -F'\t' '
+NR==1 { for(i=1;i<=NF;i++) hdr[i]=$i; next }
+{ printf "{"; for(i=1;i<=NF;i++) printf "\"%s\":\"%s\"%s",hdr[i],$i,(i<NF?",":""); print "}" }
+' | jq -s .
+
+# fzf task picker
+grit list "@open" | \
+    awk -F'\t' 'NR>1 { printf "%s  %-40s  %s\n",$1,$3,$4 }' | \
+    fzf --prompt="edit> " | awk '{print $1}' | xargs -r grit edit
+```
+
+---
+
 ## Changelog
+
+### v1.1.0
+
+- **Adaptive terminal output** - `grit list` detects terminal width and shows
+  fewer columns on narrow terminals, more on wide ones.
+- **Piped TSV output** - when stdout is piped, all commands emit
+  machine-readable output: `grit list` writes TSV with a header row, mutating
+  commands (`add`, `close`, `reopen`, `delete`) print only the affected task
+  ID. Batch operations print one ID per line.
+
+### v1.0.0
+
+- Stable CLI contract declared. No functional changes from v0.2.0.
 
 ### v0.2.0
 
