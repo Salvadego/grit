@@ -149,3 +149,16 @@ func formatRelations(rels []Relation) string {
 	}
 	return "[" + strings.Join(parts, ", ") + "]"
 }
+
+func idFromFilename(name string) (uint64, bool) {
+	base := filepath.Base(name)
+	idx := strings.IndexByte(base, '-')
+	if idx < 0 {
+		return 0, false
+	}
+	n, err := strconv.ParseUint(base[:idx], 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}

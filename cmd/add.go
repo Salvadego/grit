@@ -69,7 +69,11 @@ var addCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("grit: created %d - %s\n  -> %s\n", id, title, filename)
+		if isPiped() {
+			fmt.Printf("%d\n", id)
+		} else {
+			fmt.Printf("grit: created %d - %s\n  -> %s\n", id, title, filename)
+		}
 		return nil
 	},
 }

@@ -133,9 +133,9 @@ func liveRefSuggestions(partial string) []string {
 	cache := LoadState()
 	var out []string
 	for _, entry := range cache {
-		if entry.StatusByte != 0 {
-			continue
-		}
+		// if entry.StatusByte != 0 {
+		// 	continue
+		// }
 		slug := nullTrimmed(entry.Slug[:])
 		title := nullTrimmed(entry.Title[:])
 		id := fmt.Sprintf("%d", entry.ID)
