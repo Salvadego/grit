@@ -33,7 +33,12 @@ var listCmd = &cobra.Command{
 			listQuery = "@open" // show only open tasks by default
 		}
 
-		cq, err := gritEngine.Compile(listQuery)
+		query := listQuery
+		if len(args) > 0 {
+			query = args[0]
+		}
+
+		cq, err := gritEngine.Compile(query)
 		if err != nil {
 			return fmt.Errorf("invalid query: %w", err)
 		}
@@ -88,7 +93,9 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
+    // Keep -q as a hidden alias for backwards compat / muscle memory
 	listCmd.Flags().StringVarP(&listQuery, "query", "q", "", `filter expression, e.g. ".bug AND @open"`)
+    listCmd.Flags().MarkHidden("query")
 	rootCmd.AddCommand(listCmd)
 }
 
