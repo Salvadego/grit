@@ -202,6 +202,112 @@ func execCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]s
 	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
+var relationTypes = []struct{ val, desc string }{
+	{"related", "symmetric reference"},
+	{"blocks", "this task blocks target"},
+	{"blocked-by", "this task is blocked by target"},
+	{"parent", "this task is parent of target"},
+	{"child", "this task is child of target"},
+}
+
+func relTypeCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) != 2 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	var out []string
+	for _, r := range relationTypes {
+		if strings.HasPrefix(r.val, toComplete) {
+			out = append(out, r.val+"\t"+r.desc)
+		}
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
+}
+
+func relTargetCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) != 1 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	sourcePath, _ := FindByRef(args[0])
+	var sourceID uint64
+	if sourcePath != "" {
+		sourceID, _ = idFromFilename(sourcePath)
+	}
+
+	cache := LoadState()
+	var out []string
+	for _, entry := range cache {
+		if entry.ID == sourceID {
+			continue
+		}
+		slug := nullTrimmed(entry.Slug[:])
+		title := nullTrimmed(entry.Title[:])
+		id := fmt.Sprintf("%d", entry.ID)
+		if toComplete == "" || strings.HasPrefix(slug, toComplete) || strings.HasPrefix(id, toComplete) {
+			out = append(out, id+"\t"+title)
+		}
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
+}
+
+func unrelateTargetCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) != 1 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	path, err := FindByRef(args[0])
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	t, err := ParseTask(path)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	if len(t.Relations) == 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	cache := LoadState()
+	var out []string
+	for _, r := range t.Relations {
+		id := fmt.Sprintf("%d", r.TargetID)
+		if toComplete != "" && !strings.HasPrefix(id, toComplete) {
+			continue
+		}
+		desc := r.Type.String()
+		if entry, ok := cache[r.TargetID]; ok {
+			desc = r.Type.String() + ": " + nullTrimmed(entry.Title[:])
+		}
+		out = append(out, id+"\t"+desc)
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
+}
+
+func addRelationFlagCompletionFn(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if idx := strings.LastIndex(toComplete, ":"); idx != -1 {
+		idPart := toComplete[:idx]
+		partial := toComplete[idx+1:]
+		var out []string
+		for _, r := range relationTypes {
+			if strings.HasPrefix(r.val, partial) {
+				out = append(out, idPart+":"+r.val+"\t"+r.desc)
+			}
+		}
+		return out, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	cache := LoadState()
+	var out []string
+	for _, entry := range cache {
+		slug := nullTrimmed(entry.Slug[:])
+		title := nullTrimmed(entry.Title[:])
+		id := fmt.Sprintf("%d", entry.ID)
+		if toComplete == "" || strings.HasPrefix(id, toComplete) || strings.HasPrefix(slug, toComplete) {
+			out = append(out, id+"\t"+title)
+		}
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
+}
+
 func init() {
 	refCommands := []*cobra.Command{
 		editCmd,
@@ -216,4 +322,26 @@ func init() {
 	}
 
 	listCmd.ValidArgsFunction = queryCompletionFn
+
+	relateCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		switch len(args) {
+		case 0:
+			return liveRefSuggestions(toComplete), cobra.ShellCompDirectiveNoFileComp
+		case 1:
+			return relTargetCompletionFn(cmd, args, toComplete)
+		case 2:
+			return relTypeCompletionFn(cmd, args, toComplete)
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	unrelateCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		switch len(args) {
+		case 0:
+			return liveRefSuggestions(toComplete), cobra.ShellCompDirectiveNoFileComp
+		case 1:
+			return unrelateTargetCompletionFn(cmd, args, toComplete)
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
 }
