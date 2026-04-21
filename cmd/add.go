@@ -81,6 +81,7 @@ var addCmd = &cobra.Command{
 func init() {
 	addCmd.Flags().StringSliceVarP(&addTags, "tags", "t", nil, "comma-separated tags")
 	addCmd.Flags().StringSliceVarP(&addRelations, "relations", "r", nil, `related task IDs, e.g. -r 1776481293919 -r 1776481439085:blocks`)
+	addCmd.RegisterFlagCompletionFunc("relations", addRelationFlagCompletionFn)
 	rootCmd.AddCommand(addCmd)
 }
 

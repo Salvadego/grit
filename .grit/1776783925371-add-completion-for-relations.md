@@ -1,6 +1,6 @@
 ---
 id: 1776783925371
-status: open
+status: closed
 tags: [v1.2.0, completion, relation]
 relations: [1776783742847:child]
 ---
