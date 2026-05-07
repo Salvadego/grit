@@ -1,12 +1,20 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+const bodyStartLine uint8 = 7
+
+var (
+	bodyFlag string
 )
 
 var editCmd = &cobra.Command{
@@ -18,6 +26,50 @@ var editCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		if bodyFlag != "" {
+			tmp := path + ".tmp"
+
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			tmpFile, err := os.Create(tmp)
+			if err != nil {
+				return err
+			}
+			defer tmpFile.Close()
+
+			scanner := bufio.NewScanner(file)
+			writer := bufio.NewWriter(tmpFile)
+			lineCount := uint8(0)
+
+			for scanner.Scan() {
+				lineCount++
+
+				fmt.Fprintln(writer, scanner.Text())
+
+				if lineCount == bodyStartLine {
+					fmt.Fprint(writer, "\n")
+
+					for newLine := range strings.Lines(bodyFlag) {
+						fmt.Fprintln(writer, newLine)
+					}
+					break
+				}
+			}
+
+			if err := scanner.Err(); err != nil {
+				return err
+			}
+
+			writer.Flush()
+
+			return os.Rename(tmp, path)
+		}
+
 		editor := viper.GetString("EDITOR")
 		if editor == "" {
 			editor = "vi"
@@ -26,6 +78,7 @@ var editCmd = &cobra.Command{
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
+
 		if err := c.Run(); err != nil {
 			return fmt.Errorf("editor: %w", err)
 		}
@@ -34,5 +87,7 @@ var editCmd = &cobra.Command{
 }
 
 func init() {
+	editCmd.Flags().StringVar(&bodyFlag, "body", "", "The body of the task after the header")
+
 	rootCmd.AddCommand(editCmd)
 }
