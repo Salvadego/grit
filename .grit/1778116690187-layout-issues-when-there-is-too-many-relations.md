@@ -1,6 +1,6 @@
 ---
 id: 1778116690187
-status: open
+status: closed
 tags: [v1.2.0]
 relations: [1776783742847:child]
 ---
