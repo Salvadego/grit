@@ -57,7 +57,31 @@ var taskColumns = []column{
 	{
 		header:   "relations",
 		minWidth: 130,
-		value:    func(t Task) string { return formatRelationsShort(t.Relations) },
+		value: func(t Task) string {
+			if len(t.Relations) == 0 {
+				return ""
+			}
+			if len(t.Relations) > 3 {
+				counts := make(map[string]int)
+				for _, r := range t.Relations {
+					counts[r.Type.String()]++
+				}
+				parts := make([]string, 0, len(counts))
+				for typ, n := range counts {
+					parts = append(parts, fmt.Sprintf("%d %s", n, typ))
+				}
+				return fmt.Sprintf("[%d] %s", len(t.Relations), strings.Join(parts, ", "))
+			}
+			parts := make([]string, len(t.Relations))
+			for i, r := range t.Relations {
+				id := fmt.Sprintf("%d", r.TargetID)
+				if len(id) > 6 {
+					id = "…" + id[len(id)-6:]
+				}
+				parts[i] = r.Type.String() + ":" + id
+			}
+			return strings.Join(parts, ", ")
+		},
 	},
 	{
 		header:   "created",
@@ -95,7 +119,7 @@ func titleMaxWidth(termW, numCols int) int {
 
 func renderTable(tasks []Task) {
 	width := termWidth()
-	cols  := visibleColumns(width)
+	cols := visibleColumns(width)
 	titleMax := titleMaxWidth(width, len(cols))
 
 	headers := make([]string, len(cols))
